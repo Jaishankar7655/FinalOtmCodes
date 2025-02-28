@@ -1,20 +1,15 @@
 import React, { useState } from "react";
 import { Search, User, Menu, X, ChevronRight } from "lucide-react";
-import otm from "../assets/svg/otm.svg";
+import otm from "../assets/svg/OTM.svg";
 import { Link } from "react-router-dom";
 
 function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navLinks = [
-    { name: "Venue" },
     { name: "Vendor", route: "/Venders" },
-    { name: "Photos" },
-    { name: "Real Wedding" },
-    { name: "Blog" },
-    { name: "Shop" },
-    { name: "E-Invite" },
-    { name: "Register As vender", route: "/VendorList"},
+    { name: "Register As vender", route: "/VendorLogin" },
+    { name: "Profile", route: "/VendorProfile" },
   ];
 
   return (
@@ -49,15 +44,17 @@ function Navbar() {
           />
 
           {/* Login Section */}
-          <div className="hidden lg:flex items-center space-x-2">
-            <User
-              size={24}
-              className="text-[#CC0B0B] hover:text-[#FF4444] transition-colors duration-300"
-            />
-            <span className="text-xl text-[#CC0B0B] hover:text-[#FF4444] transition-colors duration-300">
-              Login
-            </span>
-          </div>
+          <Link to="/UserLogin">
+            <div className="hidden lg:flex items-center space-x-2">
+              <User
+                size={24}
+                className="text-[#CC0B0B] hover:text-[#FF4444] transition-colors duration-300"
+              />
+              <span className="text-xl text-[#CC0B0B] hover:text-[#FF4444] transition-colors duration-300">
+                Login
+              </span>
+            </div>
+          </Link>
 
           {/* Mobile Menu Toggle */}
           <div className="lg:hidden">

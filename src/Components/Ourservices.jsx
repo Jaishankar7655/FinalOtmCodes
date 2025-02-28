@@ -15,14 +15,20 @@ import dhol from "../assets/vendors/dhol.png";
 import dj from "../assets/vendors/dj.png";
 import band from "../assets/vendors/band.png";
 
-import { Filter } from "lucide-react";
+import { Filter, Route } from "lucide-react";
 import notFound from "../assets/images/notfound.png";
 import LoverStrip from "./LoverStrip";
+import { Link } from "react-router-dom";
 
 function VendorList() {
   const vendorsData = [
-    { title: "Hotel", img: hotel, category: "Accommodation" },
-    { title: "Photo Video", img: photo, category: "Photography" },
+    {
+      title: "Hotel",
+      img: hotel,
+      category: "Accommodation",
+      Route: "/Venders/Hotelbooking",
+    },
+    { title: "Photo Video", img: photo, category: "Photography" ,  Route: "/Venders/Photography", },
     { title: "Decoration", img: decoration, category: "Decor" },
     { title: "Tours & Travels", img: tours, category: "Travel" },
     { title: "Catering", img: catering, category: "Food" },
@@ -38,38 +44,37 @@ function VendorList() {
     { title: "Band", img: band, category: "Music" },
   ];
 
-  
-
-  
-
   return (
     <>
-   
       <div className="bg-slate-100">
-      <h1 className="text-red-600 text-4xl font-bold text-center py-3" >Our featured Services </h1>
+        <h1 className="text-red-600 text-4xl font-bold text-center py-3">
+          Our featured Services{" "}
+        </h1>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 md:w-[70%] w-[90%] m-auto pt-10">
           {vendorsData.map((vendor, index) => {
             return (
-              <div
-                key={index}
-                className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-2 cursor-pointer overflow-hidden"
-              >
-                <div className="p-4 text-center flex flex-col items-center">
-                  <div className="mb-3 flex justify-center items-center h-20 w-full">
-                    <img
-                      src={vendor.img}
-                      alt={vendor.title}
-                      className="max-h-16 max-w-16 object-contain"
-                    />
+              <Link to={vendor.Route} >
+                <div
+                  key={index}
+                  className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-2 cursor-pointer overflow-hidden"
+                >
+                  <div className="p-4 text-center flex flex-col items-center">
+                    <div className="mb-3 flex justify-center items-center h-20 w-full">
+                      <img
+                        src={vendor.img}
+                        alt={vendor.title}
+                        className="max-h-16 max-w-16 object-contain"
+                      />
+                    </div>
+                    <h3 className="text-sm font-semibold text-gray-700 truncate w-full text-center">
+                      {vendor.title}
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-1 w-full text-center">
+                      {vendor.category}
+                    </p>
                   </div>
-                  <h3 className="text-sm font-semibold text-gray-700 truncate w-full text-center">
-                    {vendor.title}
-                  </h3>
-                  <p className="text-xs text-gray-500 mt-1 w-full text-center">
-                    {vendor.category}
-                  </p>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

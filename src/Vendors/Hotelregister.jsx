@@ -22,8 +22,6 @@ const HotelRegister = () => {
     restaurant: [],
   });
 
-  const [submittedData, setSubmittedData] = useState(null);
-
   const imageCategories = [
     { key: "videos", label: "Add Videos" },
     { key: "rooms", label: "Add Room Images" },
@@ -85,19 +83,7 @@ const HotelRegister = () => {
     };
 
     // Log the complete data in console
-    
     console.log("Complete Form Submission:", completeFormData);
-
-    // Create a summary object for display
-    const submitSummary = {
-      ...formData,
-      images: Object.entries(uploadedImages).reduce((acc, [category, images]) => {
-        acc[category] = images.length;
-        return acc;
-      }, {})
-    };
-
-    setSubmittedData(submitSummary);
 
     // Cleanup URLs after logging
     Object.values(completeFormData.images).forEach(categoryImages => {
@@ -228,35 +214,6 @@ const HotelRegister = () => {
             </button>
           </div>
         </form>
-
-        {submittedData && (
-          <div className="mt-8 bg-white rounded-lg shadow-lg p-8">
-            <h2 className="text-2xl font-semibold text-red-700 mb-6">
-              Submitted Data Summary
-            </h2>
-            <div className="space-y-4">
-              {Object.entries(submittedData).map(([key, value]) => (
-                <div key={key} className="flex border-b pb-2">
-                  <span className="font-medium w-1/3 text-gray-700">
-                    {key.charAt(0).toUpperCase() + key.slice(1)}:
-                  </span>
-                  <span className="w-2/3">
-                    {key === "images"
-                      ? Object.entries(value)
-                          .map(
-                            ([imgKey, count]) =>
-                              `${imgKey}: ${count} ${
-                                count === 1 ? "image" : "images"
-                              }`
-                          )
-                          .join(", ")
-                      : value}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
