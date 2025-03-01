@@ -14,7 +14,7 @@ const VendorLogin = () => {
   // Check if user is already logged in
   useEffect(() => {
     if (sessionStorage.getItem("userData")) {
-      navigate("/Vendors");
+      navigate("/VendorList");
     }
   }, [navigate]);
 
@@ -64,7 +64,7 @@ const VendorLogin = () => {
         // Also store in localStorage for persistence
         localStorage.setItem("userData", JSON.stringify(userData));
 
-        navigate("/Venders");
+        navigate("/VendorList");
       } else {
         setErrorMessage(
           result.message || "Invalid credentials. Please try again."

@@ -7,9 +7,10 @@ function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navLinks = [
-    { name: "Vendor", route: "/Venders" },
+    { name: "Vendor", route: "/Vendors" },
     { name: "Register As vender", route: "/VendorLogin" },
-    { name: "Profile", route: "/VendorProfile" },
+    { name: "Vendor Profile", route: "/VendorProfile" },
+    { name: "User Profile", route: "/UserProfile" },
   ];
 
   return (

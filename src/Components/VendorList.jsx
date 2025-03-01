@@ -22,21 +22,96 @@ import { Link } from "react-router-dom";
 
 function VendorList() {
   const vendorsData = [
-    { title: "Hotel", img: hotel, category: "Accommodation" , Route:"/VendorList/Hotelregister" },
-    { title: "Photo Video", img: photo, category: "Photography" , Route:"/VendorList/Photvideo" },
-    { title: "Decoration", img: decoration, category: "Decor" , Route:"/VendorList/DecorationRegister" },
-    { title: "Tours & Travels", img: tours, category: "Travel" , Route:"/VendorList/ToursRegister" },
-    { title: "Catering", img: catering, category: "Food" , Route:"/VendorList/CateringRegister" },
-    { title: "VarMala Entry", img: varmala, category: "Ceremony" , Route:"/VendorList/WaramalaRegister" },
-    { title: "Tent Houses", img: tent, category: "Venue"  , Route:"/VendorList/TentHouseRegister"},
-    { title: "Makeup Artist", img: makeup, category: "Beauty" , Route:"/VendorList/MakeupArtistRegister" },
-    { title: "Pandit", img: pandit, category: "Ceremony" , Route:"/VendorList/PanditRegister" },
-    { title: "Wedding Dress", img: weddingdress, category: "Attire" , Route:"/VendorList/WeddingDressRegister" },
-    { title: "Entertainment", img: entertainment, category: "Performance" , Route:"/VendorList/EntertainMentRegister/" },
-    { title: "Venue", img: venue, category: "Venue" , Route:"/VendorList/VenueRegister" },
-    { title: "Dhol", img: dhol, category: "Music" , Route:"/VendorList/DholRegister" },
-    { title: "DJ", img: dj, category: "Music" ,Route:"/VendorList/DJRegister" },
-    { title: "Band", img: band, category: "Music"  , Route:"/VendorList/BandRegister"},
+    {
+      title: "Hotel",
+      img: hotel,
+      category: "Accommodation",
+      Route: "/VendorList/Hotelregister",
+    },
+    {
+      title: "Photo Video",
+      img: photo,
+      category: "Photography",
+      Route: "/VendorList/Photvideo",
+    },
+    {
+      title: "Decoration",
+      img: decoration,
+      category: "Decor",
+      Route: "/VendorList/DecorationRegister",
+    },
+    {
+      title: "Tours & Travels",
+      img: tours,
+      category: "Travel",
+      Route: "/VendorList/ToursRegister",
+    },
+    {
+      title: "Catering",
+      img: catering,
+      category: "Food",
+      Route: "/VendorList/CateringRegister",
+    },
+    {
+      title: "VarMala Entry",
+      img: varmala,
+      category: "Ceremony",
+      Route: "/VendorList/WaramalaRegister",
+    },
+    {
+      title: "Tent Houses",
+      img: tent,
+      category: "Venue",
+      Route: "/VendorList/TentHouseRegister",
+    },
+    {
+      title: "Makeup Artist",
+      img: makeup,
+      category: "Beauty",
+      Route: "/VendorList/MakeupArtistRegister",
+    },
+    {
+      title: "Pandit",
+      img: pandit,
+      category: "Ceremony",
+      Route: "/VendorList/PanditRegister",
+    },
+    {
+      title: "Wedding Dress",
+      img: weddingdress,
+      category: "Attire",
+      Route: "/VendorList/WeddingDressRegister",
+    },
+    {
+      title: "Entertainment",
+      img: entertainment,
+      category: "Performance",
+      Route: "/VendorList/EntertainMentRegister/",
+    },
+    {
+      title: "Venue",
+      img: venue,
+      category: "Venue",
+      Route: "/VendorList/VenueRegister",
+    },
+    {
+      title: "Dhol",
+      img: dhol,
+      category: "Music",
+      Route: "/VendorList/DholRegister",
+    },
+    {
+      title: "DJ",
+      img: dj,
+      category: "Music",
+      Route: "/VendorList/DJRegister",
+    },
+    {
+      title: "Band",
+      img: band,
+      category: "Music",
+      Route: "/VendorList/BandRegister",
+    },
   ];
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -96,27 +171,27 @@ function VendorList() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 md:w-[70%] w-[90%] m-auto mt-10">
           {filterData.length > 0 ? (
             filterData.map((vendor, index) => (
-              <Link to={vendor.Route} >
-              <div
-                key={index}
-                className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-2 cursor-pointer overflow-hidden"
-              >
-                <div className="p-4 text-center flex flex-col items-center">
-                  <div className="mb-3 flex justify-center items-center h-20 w-full">
-                    <img
-                      src={vendor.img}
-                      alt={vendor.title}
-                      className="max-h-16 max-w-16 object-contain"
-                    />
+              <Link to={vendor.Route}>
+                <div
+                  key={index}
+                  className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-2 cursor-pointer overflow-hidden"
+                >
+                  <div className="p-4 text-center flex flex-col items-center">
+                    <div className="mb-3 flex justify-center items-center h-20 w-full">
+                      <img
+                        src={vendor.img}
+                        alt={vendor.title}
+                        className="max-h-16 max-w-16 object-contain"
+                      />
+                    </div>
+                    <h3 className="text-sm font-semibold text-gray-700 truncate w-full text-center">
+                      {vendor.title}
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-1 w-full text-center">
+                      {vendor.category}
+                    </p>
                   </div>
-                  <h3 className="text-sm font-semibold text-gray-700 truncate w-full text-center">
-                    {vendor.title}
-                  </h3>
-                  <p className="text-xs text-gray-500 mt-1 w-full text-center">
-                    {vendor.category}
-                  </p>
                 </div>
-              </div>
               </Link>
             ))
           ) : (

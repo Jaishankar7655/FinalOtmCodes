@@ -41,6 +41,7 @@ import VendorLogin from "./UserLog/VendorLogin.jsx";
 import UserLogin from "./UserLog/UserLogin.jsx";
 import UserRegister from "./UserLog/UserRegister.jsx";
 import VendorProfile from "./Profile/VendorProfile.jsx";
+import UserProfile from "./Profile/UserProfile.jsx";
 
 // Function to check if user is authenticated
 const isAuthenticated = () => {
@@ -64,7 +65,7 @@ createRoot(document.getElementById("root")).render(
         <Route path="/" element={<App />} />
         <Route path="/mehndiservices" element={<Mehndisection />} />
         <Route path="/Shimmerefect" element={<Shimmerefect />} />
-        <Route path="/Venders" element={<Venders />} />
+        <Route path="/Vendors" element={<Venders />} />
         <Route path="/Venders/Photography" element={<Photography />} />
         <Route path="/Venders/Hotelbooking" element={<Hotelbooking />} />
         <Route path="/VendorList" element={<VendorList />} />
@@ -112,6 +113,7 @@ createRoot(document.getElementById("root")).render(
 
         {/* Protected VendorProfile route */}
         <Route path="/VendorProfile" element={<VendorProfile />} />
+        <Route path="/UserProfile" element={<UserProfile />} />
 
         <Route
           path="/Venders/Photography/Detailedphotographer"

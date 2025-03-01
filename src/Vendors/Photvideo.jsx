@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { XCircle, Volume2, VolumeX, Loader2 } from "lucide-react";
-import { useForm } from "react-hook-form";
 
 const servicesData = [
   "Wedding Photography",
@@ -13,17 +12,64 @@ const servicesData = [
   "Music Videos",
 ];
 
-const photovideo = () => {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm();
+const PhotoVideo = () => {
+  const [formData, setFormData] = useState({
+    fullName: "",
+    mobile: "",
+    email: "",
+    experience: "",
+    House: "",
+    City: "",
+    nearby: "",
+    District: "",
+    State: "",
+    Pincode: ""
+  });
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [selectedSpecializations, setSelectedSpecializations] = useState([]);
   const [portfolioImages, setPortfolioImages] = useState([]);
   const [videos, setVideos] = useState([]);
   const [audioEnabled, setAudioEnabled] = useState({});
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
+
+  const validate = () => {
+    const newErrors = {};
+    
+    if (!formData.fullName) newErrors.fullName = "Firm name is required";
+    else if (formData.fullName.length < 3) newErrors.fullName = "Name must be at least 3 characters";
+    
+    if (!formData.mobile) newErrors.mobile = "Mobile number is required";
+    else if (!/^[0-9]{10}$/.test(formData.mobile)) newErrors.mobile = "Please enter a valid 10-digit mobile number";
+    
+    if (!formData.email) newErrors.email = "Email is required";
+    else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.email)) newErrors.email = "Please enter a valid email address";
+    
+    if (!formData.experience) newErrors.experience = "Experience is required";
+    
+    if (!formData.House) newErrors.House = "House No /Flate No /Building No. is Required";
+    
+    if (!formData.City) newErrors.City = "City/Colony/village/street is required";
+    
+    if (!formData.nearby) newErrors.nearby = "nearby is required";
+    
+    if (!formData.District) newErrors.District = "District is required";
+    
+    if (!formData.State) newErrors.State = "State is required";
+    
+    if (!formData.Pincode) newErrors.Pincode = "Pincode is required";
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleCheckboxChange = (service) => {
     setSelectedSpecializations((prev) =>
@@ -75,12 +121,18 @@ const photovideo = () => {
     }));
   };
 
-  const onSubmit = async (data) => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validate()) return;
+    
+    setIsSubmitting(true);
+    
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const submitData = {
-        ...data,
+        ...formData,
         specializations: selectedSpecializations,
         images: portfolioImages.map((img) => img.file),
         videos: videos.map((vid) => vid.file),
@@ -90,38 +142,64 @@ const photovideo = () => {
       alert("Registration successful!");
     } catch (error) {
       alert("Error submitting form. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  // Add the specializations section that was missing
+  const renderSpecializations = () => (
+    <div className="mb-6">
+      <label className="block text-sm font-medium text-gray-700 mb-3">
+        Your Specializations
+      </label>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {servicesData.map((service) => (
+          <div key={service} className="flex items-center">
+            <input
+              type="checkbox"
+              id={service}
+              checked={selectedSpecializations.includes(service)}
+              onChange={() => handleCheckboxChange(service)}
+              className="h-4 w-4 text-red-500 border-gray-300 rounded focus:ring-red-500"
+            />
+            <label htmlFor={service} className="ml-2 text-sm text-gray-700">
+              {service}
+            </label>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-red-50 p-6">
       <div className="bg-gradient-to-r from-red-500 to-red-500 px-4 py-8 text-white text-center rounded-lg">
-        <h1 className="text-4xl font-bold">Join OTM as a Photo/Video Professional!</h1>
+        <h1 className="text-4xl font-bold">
+          Join OTM as a Photo/Video Professional!
+        </h1>
         <p className="mt-2 text-red-100">
-          Capture beautiful moments and create lasting memories for thousands of clients
+          Capture beautiful moments and create lasting memories for thousands of
+          clients
         </p>
       </div>
 
       <div className="md:w-[900px] w-full mx-auto mt-8 bg-white p-6 rounded-lg shadow-lg">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name
+                Firm name
               </label>
               <input
-                {...register("fullName", {
-                  required: "Full name is required",
-                  minLength: {
-                    value: 3,
-                    message: "Name must be at least 3 characters",
-                  },
-                })}
+                name="fullName"
+                value={formData.fullName}
+                onChange={handleInputChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
               />
               {errors.fullName && (
                 <p className="text-red-500 text-sm mt-1">
-                  {errors.fullName.message}
+                  {errors.fullName}
                 </p>
               )}
             </div>
@@ -131,18 +209,14 @@ const photovideo = () => {
                 Mobile Number
               </label>
               <input
-                {...register("mobile", {
-                  required: "Mobile number is required",
-                  pattern: {
-                    value: /^[0-9]{10}$/,
-                    message: "Please enter a valid 10-digit mobile number",
-                  },
-                })}
+                name="mobile"
+                value={formData.mobile}
+                onChange={handleInputChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
               />
               {errors.mobile && (
                 <p className="text-red-500 text-sm mt-1">
-                  {errors.mobile.message}
+                  {errors.mobile}
                 </p>
               )}
             </div>
@@ -152,18 +226,14 @@ const photovideo = () => {
                 Email
               </label>
               <input
-                {...register("email", {
-                  required: "Email is required",
-                  pattern: {
-                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: "Please enter a valid email address",
-                  },
-                })}
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
               />
               {errors.email && (
                 <p className="text-red-500 text-sm mt-1">
-                  {errors.email.message}
+                  {errors.email}
                 </p>
               )}
             </div>
@@ -174,67 +244,128 @@ const photovideo = () => {
               </label>
               <input
                 type="number"
-                {...register("experience", {
-                  required: "Experience is required",
-                  min: {
-                    value: 0,
-                    message: "Experience cannot be negative",
-                  },
-                })}
+                name="experience"
+                value={formData.experience}
+                onChange={handleInputChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
               />
               {errors.experience && (
                 <p className="text-red-500 text-sm mt-1">
-                  {errors.experience.message}
+                  {errors.experience}
                 </p>
               )}
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              About Your Services
-            </label>
-            <textarea
-              {...register("about", {
-                required: "Please describe your services",
-                minLength: {
-                  value: 50,
-                  message: "Please provide at least 50 characters",
-                },
-              })}
-              rows="3"
-              placeholder="Describe your photography/videography style, equipment, and the experience you provide..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-            />
-            {errors.about && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.about.message}
-              </p>
-            )}
-          </div>
+          {/* Address Details  */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                House No /Flate No /Building No.
+              </label>
+              <input
+                name="House"
+                value={formData.House}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              />
+              {errors.House && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.House}
+                </p>
+              )}
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
-              Photography/Videography Specializations
-            </label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {servicesData.map((service, index) => (
-                <label
-                  key={index}
-                  className="flex items-center p-3 border rounded-lg hover:bg-red-50 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedSpecializations.includes(service)}
-                    onChange={() => handleCheckboxChange(service)}
-                    className="h-4 w-4 text-red-600 border-gray-300 rounded"
-                  />
-                  <span className="ml-2 text-sm text-gray-700">{service}</span>
-                </label>
-              ))}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                City/Colony/village/street
+              </label>
+              <input
+                name="City"
+                value={formData.City}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              />
+              {errors.City && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.City}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                nearby/landmark
+              </label>
+              <input
+                name="nearby"
+                value={formData.nearby}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              />
+              {errors.nearby && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.nearby}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                District
+              </label>
+              <input
+                type="text"
+                name="District"
+                value={formData.District}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              />
+              {errors.District && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.District}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                State
+              </label>
+              <input
+                name="State"
+                value={formData.State}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              />
+              {errors.State && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.State}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Pin Code
+              </label>
+              <input
+                type="number"
+                name="Pincode"
+                value={formData.Pincode}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              />
+              {errors.Pincode && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.Pincode}
+                </p>
+              )}
             </div>
           </div>
+
+          {/* Render the specializations section */}
+          {renderSpecializations()}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -358,4 +489,4 @@ const photovideo = () => {
   );
 };
 
-export default photovideo;
+export default PhotoVideo;
