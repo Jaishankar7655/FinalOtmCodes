@@ -39,10 +39,11 @@ function Navbar() {
         {/* Right Side Icons */}
         <div className="flex items-center space-x-4 lg:space-x-6">
           {/* Search Icon */}
-          <Search
-            size={24}
-            className="text-[#CC0B0B] hover:text-[#FF4444] cursor-pointer transition-colors duration-300"
-          />
+          <p className="text-red-600 font-semibold" >
+             <Link  to="/VendorLogin"> 
+             Vendor Login
+             </Link>
+          </p>
 
           {/* Login Section */}
           <Link to="/UserLogin">

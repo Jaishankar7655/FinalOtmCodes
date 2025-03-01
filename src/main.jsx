@@ -43,18 +43,19 @@ import UserRegister from "./UserLog/UserRegister.jsx";
 import VendorProfile from "./Profile/VendorProfile.jsx";
 import UserProfile from "./Profile/UserProfile.jsx";
 
-// Function to check if user is authenticated
-const isAuthenticated = () => {
-  return sessionStorage.getItem("vendorData") !== null;
-};
 
-// Protected route component
-const ProtectedRoute = ({ children }) => {
-  if (!isAuthenticated()) {
-    return <Navigate to="/VendorLogin" />;
-  }
-  return children;
-};
+// Function to check if user is authenticated
+// const isAuthenticated = () => {
+//   return sessionStorage.getItem("vendorData") !== null;
+// };
+
+// // Protected route component
+// const ProtectedRoute = ({ children }) => {
+//   if (!isAuthenticated()) {
+//     return <Navigate to="/VendorLogin" />;
+//   }
+//   return children;
+// };
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -122,6 +123,7 @@ createRoot(document.getElementById("root")).render(
 
         <Route path="/Mendidetailed/:id" element={<Mendidetailed />} />
       </Routes>
+      
     </Router>
   </StrictMode>
 );
