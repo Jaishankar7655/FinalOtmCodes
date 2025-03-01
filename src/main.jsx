@@ -42,7 +42,7 @@ import UserLogin from "./UserLog/UserLogin.jsx";
 import UserRegister from "./UserLog/UserRegister.jsx";
 import VendorProfile from "./Profile/VendorProfile.jsx";
 import UserProfile from "./Profile/UserProfile.jsx";
-
+import LoverStrip from "./Components/LoverStrip.jsx";
 
 // Function to check if user is authenticated
 // const isAuthenticated = () => {
@@ -123,7 +123,7 @@ createRoot(document.getElementById("root")).render(
 
         <Route path="/Mendidetailed/:id" element={<Mendidetailed />} />
       </Routes>
-      
+      <LoverStrip />
     </Router>
   </StrictMode>
 );
