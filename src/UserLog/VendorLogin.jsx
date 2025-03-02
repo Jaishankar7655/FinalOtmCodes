@@ -38,7 +38,7 @@ const VendorLogin = () => {
 
     try {
       const response = await fetch(
-        "https://otmdemo.cynctech.in/vendor_controller/vendor_login/index_post",
+        "https://vendor.onetouchmoments.com/vendor_controller/vendor_login/index_post",
         {
           method: "POST",
           body: formBody,

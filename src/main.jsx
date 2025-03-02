@@ -30,7 +30,7 @@ import WaramalaRegister from "./Vendors/WaramalaRegister.jsx";
 import Photvideo from "./Vendors/Photvideo.jsx";
 import TentHouseRegister from "./Vendors/TentHouseRegister.jsx";
 import MakeupArtistRegister from "./Vendors/MakeupArtistRegister .jsx";
-
+import Services from "./Vendors/Services.jsx";
 import BandRigister from "./Vendors/BandRegister.jsx";
 import DholRegister from "./Vendors/DholRegister.jsx";
 import EntertainMentRegister from "./Vendors/EntertainMentRegister.jsx";
@@ -44,18 +44,7 @@ import VendorProfile from "./Profile/VendorProfile.jsx";
 import UserProfile from "./Profile/UserProfile.jsx";
 import LoverStrip from "./Components/LoverStrip.jsx";
 
-// Function to check if user is authenticated
-// const isAuthenticated = () => {
-//   return sessionStorage.getItem("vendorData") !== null;
-// };
-
-// // Protected route component
-// const ProtectedRoute = ({ children }) => {
-//   if (!isAuthenticated()) {
-//     return <Navigate to="/VendorLogin" />;
-//   }
-//   return children;
-// };
+import ProtectedRoute from "../src/UserLog/ProtectedRoute .jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -69,7 +58,14 @@ createRoot(document.getElementById("root")).render(
         <Route path="/Vendors" element={<Venders />} />
         <Route path="/Venders/Photography" element={<Photography />} />
         <Route path="/Venders/Hotelbooking" element={<Hotelbooking />} />
-        <Route path="/VendorList" element={<VendorList />} />
+        <Route
+          path="/VendorList"
+          element={
+            <ProtectedRoute>
+              <VendorList />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/VendorList/Hotelregister" element={<Hotelregister />} />
         <Route path="/VendorList/DJRegister" element={<DJRegister />} />
         <Route
@@ -120,6 +116,7 @@ createRoot(document.getElementById("root")).render(
           path="/Venders/Photography/Detailedphotographer"
           element={<Detailedphotographer />}
         />
+        <Route path="/Services" element={<Services />} />
 
         <Route path="/Mendidetailed/:id" element={<Mendidetailed />} />
       </Routes>

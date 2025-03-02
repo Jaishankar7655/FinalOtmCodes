@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { Link } from 'react-router-dom';
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { Link, useNavigate } from "react-router-dom";
 
 const ValidationItem = ({ isValid, text }) => (
   <div className="flex items-center space-x-2">
-    <div className={`w-4 h-4 rounded-full flex items-center justify-center text-xs ${
-      isValid ? "bg-green-500" : "bg-red-500"
-    } text-white`}>
+    <div
+      className={`w-4 h-4 rounded-full flex items-center justify-center text-xs ${
+        isValid ? "bg-green-500" : "bg-red-500"
+      } text-white`}
+    >
       {isValid ? "✓" : "×"}
     </div>
     <span className={`${isValid ? "text-green-600" : "text-red-600"}`}>
@@ -58,10 +60,13 @@ const PasswordInput = ({ register, errors }) => {
             required: "Password is required",
             onChange: handlePasswordChange,
             validate: {
-              length: (value) => value.length >= 8 || "Must be at least 8 characters",
+              length: (value) =>
+                value.length >= 8 || "Must be at least 8 characters",
               hasNumber: (value) => /\d/.test(value) || "Must contain a number",
-              hasLetter: (value) => /[a-zA-Z]/.test(value) || "Must contain a letter",
-              hasSpecial: (value) => /[!@#$%^&*]/.test(value) || "Must contain a special character",
+              hasLetter: (value) =>
+                /[a-zA-Z]/.test(value) || "Must contain a letter",
+              hasSpecial: (value) =>
+                /[!@#$%^&*]/.test(value) || "Must contain a special character",
             },
           })}
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all duration-200"
@@ -113,7 +118,9 @@ const PasswordInput = ({ register, errors }) => {
       </div>
 
       {errors.vendor_password && (
-        <p className="text-red-500 text-sm mt-1">{errors.vendor_password.message}</p>
+        <p className="text-red-500 text-sm mt-1">
+          {errors.vendor_password.message}
+        </p>
       )}
     </div>
   );
@@ -121,28 +128,35 @@ const PasswordInput = ({ register, errors }) => {
 
 const VendorRegistration = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const navigate = useNavigate(); // Changed from Navigate to useNavigate
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-    reset
+    reset,
   } = useForm();
 
   const onSubmit = async (data) => {
     setIsLoading(true);
-    setError('');
-    
+    setError("");
+
     try {
       const formData = new FormData();
-      Object.entries(data).forEach(([key, value]) => {
-        formData.append(key, value);
-      });
+      
+      // Append all form data with database field names
+      formData.append("vendor_name", data.vendor_name);
+      formData.append("vendor_email", data.vendor_email);
+      formData.append("vendor_phone", data.vendor_phone);
+      formData.append("vendor_password", data.vendor_password);
+      
+      // Additional fields that might be required by your backend
+      // If your backend generates vendor_id, vendor_unique_id and created_at, you don't need to send these
 
       const response = await fetch(
-        "https://otmdemo.cynctech.in/vendor_controller/vendor_register/",
+        "https://vendor.onetouchmoments.com/vendor_controller/vendor_register/index_post",
         {
           method: "POST",
           body: formData,
@@ -152,16 +166,18 @@ const VendorRegistration = () => {
       const result = await response.json();
 
       if (result.status === 1) {
-        setSuccess('Registration successful! Redirecting to login...');
+        setSuccess("Registration successful! Redirecting to login...");
         reset();
         setTimeout(() => {
-          window.location.href = "/VendorLogin";
+          navigate("/VendorLogin"); // Fixed navigation
         }, 2000);
       } else {
-        setError(result.message || 'Registration failed. Please try again.');
+        setError(result.message || "Registration failed. Please try again.");
       }
     } catch (error) {
-      setError('An error occurred while submitting the form. Please try again.');
+      setError(
+        "An error occurred while submitting the form. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -180,7 +196,7 @@ const VendorRegistration = () => {
               {error}
             </div>
           )}
-          
+
           {success && (
             <div className="mb-4 rounded-md bg-green-50 p-4 text-green-700">
               {success}
@@ -201,14 +217,16 @@ const VendorRegistration = () => {
                   },
                   pattern: {
                     value: /^[A-Za-z\s]+$/,
-                    message: "Name should only contain letters and spaces"
-                  }
+                    message: "Name should only contain letters and spaces",
+                  },
                 })}
                 type="text"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-600 focus:border-red-600"
               />
               {errors.vendor_name && (
-                <p className="text-red-600 text-sm">{errors.vendor_name.message}</p>
+                <p className="text-red-600 text-sm">
+                  {errors.vendor_name.message}
+                </p>
               )}
             </div>
 
@@ -221,14 +239,16 @@ const VendorRegistration = () => {
                   required: "Email is required",
                   pattern: {
                     value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: "Invalid email address"
-                  }
+                    message: "Invalid email address",
+                  },
                 })}
                 type="email"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-600 focus:border-red-600"
               />
               {errors.vendor_email && (
-                <p className="text-red-600 text-sm">{errors.vendor_email.message}</p>
+                <p className="text-red-600 text-sm">
+                  {errors.vendor_email.message}
+                </p>
               )}
             </div>
 
@@ -241,14 +261,16 @@ const VendorRegistration = () => {
                   required: "Phone number is required",
                   pattern: {
                     value: /^[0-9]{10}$/,
-                    message: "Please enter a valid 10-digit phone number"
-                  }
+                    message: "Please enter a valid 10-digit phone number",
+                  },
                 })}
                 type="tel"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-red-600 focus:border-red-600"
               />
               {errors.vendor_phone && (
-                <p className="text-red-600 text-sm">{errors.vendor_phone.message}</p>
+                <p className="text-red-600 text-sm">
+                  {errors.vendor_phone.message}
+                </p>
               )}
             </div>
 
@@ -269,7 +291,10 @@ const VendorRegistration = () => {
 
             <div className="text-center">
               <span className="text-gray-600">Already have an account? </span>
-              <Link to="/VendorLogin" className="font-medium text-red-600 hover:text-red-500">
+              <Link
+                to="/VendorLogin"
+                className="font-medium text-red-600 hover:text-red-500"
+              >
                 Sign in
               </Link>
             </div>

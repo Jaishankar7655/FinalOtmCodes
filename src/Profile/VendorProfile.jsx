@@ -6,6 +6,7 @@ const VendorProfile = () => {
   const [userData, setUserData] = useState(null);
   const [formData, setFormData] = useState({
     vendor_id: "",
+    vendor_unique_id: "",
     vendor_name: "",
     vendor_email: "",
     vendor_phone: "",
@@ -47,7 +48,7 @@ const VendorProfile = () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        "http://localhost:8080/otmapi/vendor_controller/vendor_profile/index_put",
+        "https://vendor.onetouchmoments.com/vendor_controller/vendor_profile/index_put/",
         {
           method: "PUT",
           headers: {
@@ -143,6 +144,7 @@ const VendorProfile = () => {
                     {userData.vendor_name}
                   </h2>
                   <p className="text-gray-600">{userData.vendor_email}</p>
+                  <p className="text-gray-600">{userData.vendor_unique_id}</p>
                   <p className="text-gray-600">{userData.vendor_phone}</p>
                 </div>
               </div>

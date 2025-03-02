@@ -38,7 +38,7 @@ const UserLogin = () => {
 
     try {
       const response = await fetch(
-        "https://otmdemo.cynctech.in/user_controller/user_login/",
+        "https://vendor.onetouchmoments.com/user_controller/user_login/",
         {
           method: "POST",
           body: formBody,

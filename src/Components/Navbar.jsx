@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Search, User, Menu, X, ChevronRight } from "lucide-react";
+import { Search, User, Menu, X, ChevronRight, PersonStandingIcon, User2, UserCog2Icon, CircleUserRound } from "lucide-react";
 import otm from "../assets/svg/OTM.svg";
 import { Link } from "react-router-dom";
 
@@ -40,9 +40,7 @@ function Navbar() {
         <div className="flex items-center space-x-4 lg:space-x-6">
           {/* Search Icon */}
           <p className="text-red-600 font-semibold" >
-             <Link  to="/VendorLogin"> 
-             Vendor Login
-             </Link>
+         <Link to="UserLogin" > <CircleUserRound   /></Link>
           </p>
 
           {/* Login Section */}

@@ -149,7 +149,7 @@ const UserRegister = () => {
       });
 
       const response = await fetch(
-        "https://otmdemo.cynctech.in/user_controller/user_register/",
+        "https://vendor.onetouchmoments.com/user_controller/user_register/",
         {
           method: "POST",
           body: formData,
