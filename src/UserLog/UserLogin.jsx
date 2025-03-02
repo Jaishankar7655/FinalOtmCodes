@@ -4,6 +4,7 @@ import VendorRegistration from "./VendorRegistration";
 
 const UserLogin = () => {
   const [formData, setFormData] = useState({
+    
     user_email: "",
     user_password: "",
   });
@@ -60,11 +61,12 @@ const UserLogin = () => {
 
         // Store in sessionStorage
         sessionStorage.setItem("userData", JSON.stringify(userData));
-
-        // Also store in localStorage for persistence
         localStorage.setItem("userData", JSON.stringify(userData));
 
-        navigate("/VendorList");
+        // Dispatch event to notify other components
+        window.dispatchEvent(new Event("userAuthChanged"));
+
+        navigate("/Vendors");
       } else {
         setErrorMessage(
           result.message || "Invalid credentials. Please try again."
@@ -239,9 +241,6 @@ const UserLogin = () => {
               Register as a User
             </Link>
           </div>
-
-
-       
         </div>
       </div>
     </div>

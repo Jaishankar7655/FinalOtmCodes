@@ -30,7 +30,7 @@ import WaramalaRegister from "./Vendors/WaramalaRegister.jsx";
 import Photvideo from "./Vendors/Photvideo.jsx";
 import TentHouseRegister from "./Vendors/TentHouseRegister.jsx";
 import MakeupArtistRegister from "./Vendors/MakeupArtistRegister .jsx";
-import Services from "./Vendors/Services.jsx";
+
 import BandRigister from "./Vendors/BandRegister.jsx";
 import DholRegister from "./Vendors/DholRegister.jsx";
 import EntertainMentRegister from "./Vendors/EntertainMentRegister.jsx";
@@ -112,11 +112,7 @@ createRoot(document.getElementById("root")).render(
         <Route path="/VendorProfile" element={<VendorProfile />} />
         <Route path="/UserProfile" element={<UserProfile />} />
 
-        <Route
-          path="/Venders/Photography/Detailedphotographer"
-          element={<Detailedphotographer />}
-        />
-        <Route path="/Services" element={<Services />} />
+       
 
         <Route path="/Mendidetailed/:id" element={<Mendidetailed />} />
       </Routes>

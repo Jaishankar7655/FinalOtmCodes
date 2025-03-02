@@ -10,7 +10,7 @@ function App() {
     <>
       <Herosction />
       <Productlist />
-      <Ourservices />
+      {/* <Ourservices /> */}
     </>
   );
 }
