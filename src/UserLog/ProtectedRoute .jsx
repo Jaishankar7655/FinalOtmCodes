@@ -1,39 +1,27 @@
 import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import { getUserSession, refreshUserSession } from './sessionUtils';
 
 const ProtectedRoute = ({ children }) => {
   const location = useLocation();
-  
+
   // Check if user is authenticated
   const isAuthenticated = () => {
-    const userData = sessionStorage.getItem('userData');
-    
-    if (!userData) {
-      return false;
-    }
-    
-    try {
-      const parsedData = JSON.parse(userData);
-      
-      // Check if the token has expired
-      if (parsedData.expiryTime && new Date().getTime() > parsedData.expiryTime) {
-        // Clear expired session
-        sessionStorage.removeItem('userData');
-        localStorage.removeItem('userData');
-        return false;
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error parsing user data:', error);
-      return false;
-    }
+    const userData = getUserSession();
+    return userData !== null;
   };
+
+  // If user is authenticated, refresh their session duration
+  useEffect(() => {
+    if (isAuthenticated()) {
+      refreshUserSession();
+    }
+  }, [location.pathname]);
 
   if (!isAuthenticated()) {
     // Redirect to login page if not authenticated
     // The "state" prop preserves the attempted URL for potential redirect after login
-    return <Navigate to="/VendorLogin" state={{ from: location }} replace />;
+    return <Navigate to="/UserLogin" state={{ from: location }} replace />;
   }
 
   return children;

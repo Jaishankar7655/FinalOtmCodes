@@ -21,8 +21,8 @@ function HeroSection() {
       <div className="relative z-10 w-full px-4 py-10 max-w-7xl mx-auto">
         <div className="text-center">
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-white font-bold mb-4 leading-tight">
-            India's Largest <span className="text-red-00">Wedding</span>{" "}
-            Planning Platform
+            India's Largest <span className="text-red-00">Event</span>{" "}
+            Mangement Platform
           </h1>
 
           <p className="text-lg md:text-xl text-white/90 mb-8 max-w-2xl mx-auto px-4">

@@ -1,6 +1,5 @@
+import { Edit, Phone } from "lucide-react";
 import React from "react";
-import pencilEditIcon from "../assets/svg/penciledit.svg";
-import mobile from "../assets/svg/mobile.svg";
 
 function Header() {
   return (
@@ -13,21 +12,13 @@ function Header() {
       <nav className="flex  justify-between lg:w-96 w-full ">
         {/* First Review Link */}
         <div className="flex items-center gap-2 text-white cursor-pointer">
-          <img 
-            className="h-[14px] w-[14px]" 
-            src={pencilEditIcon} 
-            alt="Write a review" 
-          />
+         <Edit/>
           <span md >Write a review</span>
         </div>
         
         {/* Second App Link */}
         <div className="flex items-center gap-2 text-white cursor-pointer">
-          <img 
-            className="h-[14px] w-[14px]" 
-            src={mobile} 
-            alt="Write a review" 
-          />
+         <Phone/>
           <span>Download App</span>
         </div>
       </nav>

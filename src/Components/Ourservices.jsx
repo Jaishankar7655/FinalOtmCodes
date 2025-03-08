@@ -15,8 +15,6 @@ import dhol from "../assets/vendors/dhol.png";
 import dj from "../assets/vendors/dj.png";
 import band from "../assets/vendors/band.png";
 
-import { Filter, Route } from "lucide-react";
-import notFound from "../assets/images/notfound.png";
 import LoverStrip from "./LoverStrip";
 import { Link } from "react-router-dom";
 
@@ -45,9 +43,10 @@ function VendorList() {
   ];
 
   return (
+    
     <>
       <div className="bg-slate-100">
-        <h1 className="text-red-600 text-4xl font-bold text-center py-3">
+        <h1 className="text-red-600 text-4xl font-bold text-center pt-6 py-3">
           Our featured Services{" "}
         </h1>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 md:w-[70%] w-[90%] m-auto pt-10">

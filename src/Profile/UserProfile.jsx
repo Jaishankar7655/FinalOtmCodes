@@ -49,7 +49,7 @@ const UserProfile = () => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        "https://vendor.onetouchmoments.com/user_controller/user_profile/index_put/",
+        "https://backend.onetouchmoments.com/user_controller/user_profile/index_put/",
         {
           method: "PUT",
           headers: {
