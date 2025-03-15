@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Service Details</title>
+  </head>
+  <body>
+    <h1>Service Details</h1>
+
+    <div id="service-container">
+      <!-- Images and Videos will be displayed here -->
+    </div>
+
+    <script>
+      // Define firmName and vendorId
+      const firmName = "exampleFirm"; // Replace with actual value
+      const vendorId = "123"; // Replace with actual value
+
+      const apiUrl = `https://backend.onetouchmoments.com/user_controller/Service/index_get?data=${encodeURIComponent(firmName.trim())}&vendor_id=${encodeURIComponent(vendorId.trim())}`;
+
+      async function fetchServiceData() {
+        try {
+          const response = await fetch(apiUrl);
+          if (!response.ok) throw new Error("Failed to fetch data");
+
+          const data = await response.json();
+          console.log("Full Data:", data);
+
+          if (data.data && data.data.length > 0) {
+            const service = data.data[0]; // Get first service
+            console.log("Single Service Data:", service);
+
+            const imageContainer = document.createElement("div");
+            const videoContainer = document.createElement("div");
+
+            // Handling Images
+            if (service.images) {
+              console.log("Raw Images String:", service.images);
+              const images = service.images.split(","); // Split without space
+              console.log("Parsed Images Array:", images);
+              images.forEach((img) => {
+                if (img.trim()) {
+                  const imgElement = document.createElement("img");
+                  imgElement.src = `https://backend.onetouchmoments.com/${img.trim()}`;
+                  imgElement.alt = "Service Image";
+                  imgElement.style.width = "200px";
+                  imgElement.style.margin = "5px";
+                  imageContainer.appendChild(imgElement);
+                }
+              });
+            }
+
+            // Handling Videos
+            if (service.videos) {
+              console.log("Raw Videos String:", service.videos);
+              const videos = service.videos.split(","); // Split without space
+              console.log("Parsed Videos Array:", videos);
+              videos.forEach((video) => {
+                if (video.trim()) {
+                  const videoElement = document.createElement("video");
+                  videoElement.src = `https://backend.onetouchmoments.com/${video.trim()}`;
+                  videoElement.controls = true;
+                  videoElement.style.width = "300px";
+                  videoElement.style.margin = "5px";
+                  videoContainer.appendChild(videoElement);
+                }
+              });
+            }
+
+            const serviceContainer = document.getElementById("service-container");
+            serviceContainer.innerHTML = ""; // Clear previous content
+            serviceContainer.appendChild(imageContainer);
+            serviceContainer.appendChild(videoContainer);
+          } else {
+            console.warn("No service data found");
+          }
+        } catch (error) {
+          console.error("Error fetching data:", error);
+        }
+      }
+
+      fetchServiceData();
+    </script>
+  </body>
+</html>

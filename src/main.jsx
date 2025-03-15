@@ -14,21 +14,26 @@ import Navbar from "./Components/Navbar.jsx";
 import Shimmerefect from "./Components/Shimmerefect.jsx";
 import Mendidetailed from "./Components/Mendidetailed.jsx";
 import Venders from "./Components/Venders.jsx";
-import Detailedphotographer from "./Components/Detailedphotographer.jsx";
 import Photography from "./Components/Photography.jsx";
 import Hotelbooking from "./Components/Hotelbooking.jsx";
-import VendorList from "./Components/VendorList.jsx";
-import VendorRegistration from "./UserLog/VendorRegistration.jsx";
-import VendorLogin from "./UserLog/VendorLogin.jsx";
 import UserLogin from "./UserLog/UserLogin.jsx";
 import UserRegister from "./UserLog/UserRegister.jsx";
 import VendorProfile from "./Profile/VendorProfile.jsx";
 import UserProfile from "./Profile/UserProfile.jsx";
 import LoverStrip from "./Components/LoverStrip.jsx";
 
-import ServiceDetails from "./ServicesCard/ServiceDetails.jsx";
+// import ServiceDetails from "./ServicesCard/ServiceDetails.jsx";
+import ServiceDetails from "./ServicesCard/ServiceDetails.jsx"
 import ServicesList from "./ServicesCard/ServicesList.jsx";
-
+import Category from "./VendorCategory/Category.jsx";
+import About from "./Components/About.jsx";
+import Band from "./AllService/Band.jsx";
+import PaymentComponent from "./Payment/PaymentComponent.jsx";
+import Footer from "./Components/Footer.jsx";
+import TermsandCondition from "./Components/TermsandCondition";
+import Privacypolicy from "./Components/Privacypolicy";
+import ContactForm from "./Components/ContactForm .jsx";
+import FloatingContactButton from "./Components/FloatingContactButton.jsx";
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <Router>
@@ -41,18 +46,26 @@ createRoot(document.getElementById("root")).render(
         <Route path="/Vendors" element={<Venders />} />
         <Route path="/Venders/Photography" element={<Photography />} />
         <Route path="/Venders/Hotelbooking" element={<Hotelbooking />} />
-        <Route path="/VendorRegistration" element={<VendorRegistration />} />
-        <Route path="/VendorLogin" element={<VendorLogin />} />
         <Route path="/UserLogin" element={<UserLogin />} />
         <Route path="/UserRegister" element={<UserRegister />} />
-        {/* Protected VendorProfile route */}
         <Route path="/VendorProfile" element={<VendorProfile />} />
         <Route path="/UserProfile" element={<UserProfile />} />
         <Route path="/Mendidetailed/:id" element={<Mendidetailed />} />
         <Route path="/services" element={<ServicesList />} />
-        <Route path="/services/:id" element={<ServiceDetails />} />
+        <Route path="/About-us" element={<About />} />
+        <Route path="/service/bandservices" element={<Band />} />
+
+        <Route path="/Payment" element={<PaymentComponent />} />
+        <Route path="/terms-and-conditions" element={<TermsandCondition />} />
+        <Route path="/ContactForm" element={<ContactForm />} />
+        <Route path="/privacy-policy" element={<Privacypolicy />} />
+        <Route path="/servicesCategory" element={<Category />} />
+        <Route path="/servicesdetails" element={<ServiceDetails />} />
       </Routes>
       <LoverStrip />
+      <FloatingContactButton />
+      
+      <Footer />
     </Router>
   </StrictMode>
 );

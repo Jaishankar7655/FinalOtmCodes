@@ -1,666 +1,754 @@
-import React, { useEffect, useState } from "react";
-import { Link, useParams, useLocation } from "react-router-dom";
-import {
-  FileImage,
-  FileVideo,
-  MapPin,
-  Mail,
-  Tag,
-  CheckCircle,
-  DollarSign,
-  ChevronLeft,
-  AlertCircle,
-  Clock,
-  Star,
-  Share2,
-  Heart,
-  X,
-  Phone,
-  Calendar,
-  MessageCircle,
-  ArrowLeft,
-  ArrowRight,
-  MapPinCheckInsideIcon,
-} from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { getUserSession, isUserLoggedIn } from "../UserLog/sessionUtils";
 
-// Custom hook for service details fetching with query parameters
-const useServiceDetails = (id) => {
-  const [service, setService] = useState(null);
+function ServiceDetails({ id }) {
+  const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const webUrl = "https://backend.onetouchmoments.com/";
-  const location = useLocation();
+  const [activeTab, setActiveTab] = useState("description");
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [priceSpecification, setPriceSpecification] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bookingError, setBookingError] = useState(null);
 
+  const location = useLocation();
+  const navigate = useNavigate();
+  const webUrl = "https://backend.onetouchmoments.com/";
+
+  // Fetch service details
   useEffect(() => {
     const fetchServiceDetails = async () => {
+      const userData = getUserSession();
+      const userId = userData?.user_id;
+
+      const queryParams = new URLSearchParams(location.search);
+      const firmName = queryParams.get("firm_name");
+      const vendorId = queryParams.get("vendor_id");
+
+      if (!firmName || !vendorId) {
+        const errorMessage = !firmName
+          ? "Missing firm name parameter"
+          : "Missing vendor ID parameter";
+        setError(errorMessage);
+        setLoading(false);
+        return;
+      }
+
       try {
-        // Get query parameters from URL
-        const queryParams = new URLSearchParams(location.search);
-        const firmName = queryParams.get("firm_name");
-        const vendorId = queryParams.get("vendor_id") || id;
-
-        if (!firmName) {
-          throw new Error("Firm name not provided in URL");
-        }
-
-        // Construct API URL similar to HTML implementation
-        const ApiUrl = `${webUrl}user_controller/Service/index_get?data=${encodeURIComponent(
+        const apiUrl = `${webUrl}user_controller/Service/index_get?data=${encodeURIComponent(
           firmName
         )}&vendor_id=${encodeURIComponent(vendorId)}`;
 
-        const response = await fetch(ApiUrl);
-
+        const response = await fetch(apiUrl);
         if (!response.ok) {
-          throw new Error("Failed to fetch service details");
+          throw new Error(`Error: ${response.status} ${response.statusText}`);
         }
 
         const data = await response.json();
-        console.log("Service Details API Response:", data);
 
-        if (!data.data || data.data.length === 0) {
-          throw new Error("No service found");
+        if (data.data && data.data.length > 0) {
+          // Process media files
+          const servicesWithMedia = data.data.map((service) => {
+            const images = service.images
+              ? service.images.split(",").map((img) => `${webUrl}${img.trim()}`)
+              : [];
+
+            const videos = service.videos
+              ? service.videos
+                  .split(",")
+                  .map((video) => `${webUrl}${video.trim()}`)
+              : [];
+
+            return {
+              ...service,
+              processedImages: images,
+              processedVideos: videos,
+            };
+          });
+
+          setServices(servicesWithMedia);
+        } else {
+          setServices([]);
+        }
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchServiceDetails();
+  }, [location.search, webUrl]);
+
+  // Fetch price specifications
+  useEffect(() => {
+    const fetchPriceSpecification = async () => {
+      const queryParams = new URLSearchParams(location.search);
+      const serviceId = queryParams.get("service_id");
+
+      if (!serviceId) {
+        console.error("Missing service_id parameter");
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${webUrl}user_controller/Service_price/index_get?service_id=${encodeURIComponent(
+            serviceId
+          )}`
+        );
+
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status} ${response.statusText}`);
         }
 
-        setService(data.data[0]); // Using first record as shown in HTML implementation
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching service details:", error);
-        setError(error.message);
-        setLoading(false);
+        const data = await response.json();
+        setPriceSpecification(data.data || []);
+      } catch (err) {
+        console.error("Error fetching price specification:", err);
       }
     };
 
-    if (id) {
-      fetchServiceDetails();
+    if (!loading && services.length > 0) {
+      fetchPriceSpecification();
     }
-  }, [id, webUrl, location.search]);
+  }, [loading, services, location.search, webUrl]);
 
-  return { service, loading, error, webUrl };
-};
+  // Handle booking submission
+  const handleSubmit = async (event, specifications) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+    setBookingError(null);
 
-// Service Details Component
-function ServiceDetails() {
-  const { id } = useParams();
-  const { service, loading, error, webUrl } = useServiceDetails(id);
-  const [selectedMedia, setSelectedMedia] = useState(null);
-  const [mainImage, setMainImage] = useState("");
-  const [liked, setLiked] = useState(false);
-  const [showImageCarousel, setShowImageCarousel] = useState(false);
-  const [showVideoCarousel, setShowVideoCarousel] = useState(false);
-  const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
-
-  // Function to handle main image and thumbnail gallery setup
-  useEffect(() => {
-    if (service?.images) {
-      const imageArray = service.images.split(",").filter((img) => img.trim());
-      if (imageArray.length > 0) {
-        setMainImage(`${webUrl}${imageArray[0].trim()}`);
-      }
+    if (!specifications) {
+      setBookingError("Please select a service specification");
+      setIsSubmitting(false);
+      return;
     }
-  }, [service, webUrl]);
 
-  // Share handler function
-  const ShareHandle = () => {
-    // Copy the current page URL to the clipboard
-    navigator.clipboard
-      .writeText(window.location.href)
-      .then(() => {
-        showToastNotification("Link copied to clipboard!");
-      })
-      .catch(() => {
-        showToastNotification("Failed to copy link.");
+    if (!isUserLoggedIn()) {
+      navigate("/UserLogin", { 
+        state: { 
+          returnUrl: window.location.pathname + window.location.search 
+        }
       });
+      return;
+    }
 
-    // Share the current page URL to WhatsApp
-    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(
-      window.location.href
-    )}`;
-    window.open(whatsappUrl, "_blank");
+    const userData = getUserSession();
+    if (!userData?.user_id) {
+      navigate("/UserLogin");
+      return;
+    }
+
+    const service = services[0];
+    const formData = new FormData();
+    formData.append("service_id", service.service_id);
+    formData.append("vendor_id", service.vendor_id);
+    formData.append("amount", specifications.off_price);
+    formData.append("user_id", userData.user_id);
+    formData.append("specification_id", specifications.specification_id);
+
+    try {
+      const response = await fetch(
+        `${webUrl}user_controller/User_booking/index_post`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.status === 1 && result.booking_id) {
+        navigate(
+          `/payment?booking_id=${result.booking_id}&service_id=${
+            service.service_id
+          }&vendor_id=${service.vendor_id}&off_price=${
+            specifications.off_price
+          }`
+        );
+      } else {
+        throw new Error(result.message || "Booking failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Booking error:", error);
+      setBookingError(
+        error.message || "An error occurred while processing your booking."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  // Show toast notification
-  const showToastNotification = (message) => {
-    setToastMessage(message);
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 3000);
+  // Image carousel navigation
+  const nextImage = () => {
+    if (services.length > 0 && services[0].processedImages?.length > 0) {
+      setCurrentImageIndex(
+        (prevIndex) => (prevIndex + 1) % services[0].processedImages.length
+      );
+    }
   };
 
-  // Function to render thumbnail images
-  const getImages = () => {
-    if (!service?.images) return [];
-    return service.images.split(",").filter((img) => img.trim());
+  const prevImage = () => {
+    if (services.length > 0 && services[0].processedImages?.length > 0) {
+      setCurrentImageIndex((prevIndex) =>
+        prevIndex === 0 ? services[0].processedImages.length - 1 : prevIndex - 1
+      );
+    }
   };
 
-  const getVideos = () => {
-    if (!service?.videos) return [];
-    return service.videos.split(",").filter((vid) => vid.trim());
-  };
-
-  // Function to display image as main preview
-  const setImageAsMain = (imagePath) => {
-    setMainImage(`${webUrl}${imagePath}`);
-  };
-
-  // Handle like/favorite
-  const handleLikeToggle = () => {
-    setLiked(!liked);
-    showToastNotification(
-      liked ? "Removed from favorites" : "Added to favorites"
-    );
-  };
-
-  const MediaCarousel = ({
-    items,
-    type,
-    onClose,
-    currentIndex,
-    setCurrentIndex,
-  }) => {
-    const goToNext = () => {
-      setCurrentIndex((prev) => (prev === items.length - 1 ? 0 : prev + 1));
-    };
-
-    const goToPrevious = () => {
-      setCurrentIndex((prev) => (prev === 0 ? items.length - 1 : prev - 1));
-    };
-
+  // Loading state
+  if (loading) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-95 z-50 flex flex-col items-center justify-center">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-white hover:text-red-500 bg-black bg-opacity-50 p-2 rounded-full transition-all"
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-red-600"></div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="container mx-auto p-6 max-w-4xl">
+        <div
+          className="bg-red-50 border-l-4 border-red-500 text-red-700 p-5 rounded-lg shadow-md"
+          role="alert"
         >
-          <X size={24} />
-        </button>
-
-        <div className="relative w-full max-w-6xl mx-auto px-4">
-          <button
-            onClick={goToPrevious}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-red-500 bg-black bg-opacity-50 p-2 rounded-full transition-all"
-          >
-            <ArrowLeft size={24} />
-          </button>
-
-          <button
-            onClick={goToNext}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-red-500 bg-black bg-opacity-50 p-2 rounded-full transition-all"
-          >
-            <ArrowRight size={24} />
-          </button>
-
-          <div className="flex justify-center items-center h-[80vh]">
-            {type === "image" ? (
-              <img
-                src={`${webUrl}${items[currentIndex]}`}
-                alt={`Media ${currentIndex + 1}`}
-                className="max-h-full max-w-full object-contain"
+          <div className="flex items-center">
+            <svg
+              className="h-6 w-6 mr-3"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
               />
-            ) : (
-              <video
-                controls
-                className="max-h-full max-w-full"
-                src={`${webUrl}${items[currentIndex]}`}
-              >
-                Your browser does not support video playback.
-              </video>
-            )}
-          </div>
-
-          <div className="absolute left-4 right-4 bottom-4">
-            <div className="flex justify-center gap-2 overflow-x-auto py-2">
-              {items.map((item, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentIndex(index)}
-                  className={`w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all
-                    ${
-                      currentIndex === index
-                        ? "border-red-500 scale-110"
-                        : "border-transparent opacity-70"
-                    }`}
-                >
-                  {type === "image" ? (
-                    <img
-                      src={`${webUrl}${item}`}
-                      alt={`Thumbnail ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                      <FileVideo className="text-white" size={24} />
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
+            </svg>
+            <p className="font-medium">{error}</p>
           </div>
         </div>
       </div>
     );
-  };
+  }
 
-  const renderMediaPreviews = () => {
-    const images = getImages();
-    const videos = getVideos();
-
-    return (
-      <div className="space-y-4 mt-4">
-        {/* Images preview */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <FileImage size={18} className="text-gray-500" />
-            <span className="font-medium">Images ({images.length})</span>
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            {images.slice(0, 4).map((image, index) => (
-              <button
-                key={`img-${index}`}
-                onClick={() => {
-                  setCurrentMediaIndex(index);
-                  setShowImageCarousel(true);
-                }}
-                onMouseEnter={() => setImageAsMain(image)}
-                className="relative flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden transition-all hover:shadow-lg hover:scale-105 border-2 border-transparent hover:border-red-400"
-              >
-                <img
-                  src={`${webUrl}${image}`}
-                  alt={`Preview ${index + 1}`}
-                  className="w-full h-full object-cover"
-                />
-                {index === 3 && images.length > 4 && (
-                  <div className="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center text-white">
-                    +{images.length - 4}
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Videos preview */}
-        {videos.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <FileVideo size={18} className="text-gray-500" />
-              <span className="font-medium">Videos ({videos.length})</span>
-            </div>
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {videos.slice(0, 4).map((video, index) => (
-                <button
-                  key={`vid-${index}`}
-                  onClick={() => {
-                    setCurrentMediaIndex(index);
-                    setShowVideoCarousel(true);
-                  }}
-                  className="relative flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden bg-gray-100 transition-all hover:shadow-lg hover:scale-105 border-2 border-transparent hover:border-red-400"
-                >
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <FileVideo className="text-red-500" size={24} />
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 py-1 text-white text-xs text-center">
-                    Play
-                  </div>
-                  {index === 3 && videos.length > 4 && (
-                    <div className="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center text-white">
-                      +{videos.length - 4}
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // Skeleton loader
-  const SkeletonLoader = () => (
-    <div className="max-w-6xl mx-auto p-6 animate-pulse">
-      <div className="h-10 bg-gray-200 w-40 mb-6 rounded-lg"></div>
-      <div className="flex flex-wrap">
-        <div className="w-full md:w-1/3 pr-0 md:pr-6">
-          <div className="h-64 bg-gray-200 rounded-lg mb-4"></div>
-          <div className="flex justify-between space-x-2">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-20 w-20 bg-gray-200 rounded-lg"></div>
-            ))}
-          </div>
-        </div>
-        <div className="w-full md:w-2/3 mt-6 md:mt-0">
-          <div className="h-10 bg-gray-200 w-3/4 mb-4 rounded-lg"></div>
-          <div className="h-5 bg-gray-200 w-1/4 mb-6 rounded-lg"></div>
-          <div className="space-y-2">
-            <div className="h-4 bg-gray-200 rounded w-full"></div>
-            <div className="h-4 bg-gray-200 rounded w-full"></div>
-            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-          </div>
-          <div className="h-8 bg-gray-200 w-1/3 my-6 rounded-lg"></div>
-          <div className="flex space-x-2">
-            <div className="h-8 bg-gray-200 w-24 rounded-full"></div>
-            <div className="h-8 bg-gray-200 w-24 rounded-full"></div>
-          </div>
-          <div className="mt-8 space-y-4">
-            <div className="h-12 bg-gray-200 rounded-lg"></div>
-            <div className="h-12 bg-gray-200 rounded-lg"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Error Component
-  const ErrorDisplay = ({ message }) => (
-    <div className="flex flex-col items-center justify-center p-10 text-center min-h-screen bg-gray-50">
-      <div className="bg-white p-8 rounded-2xl shadow-xl max-w-lg">
-        <AlertCircle className="w-20 h-20 text-red-500 mb-6 mx-auto" />
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">
-          Oops! Something went wrong
-        </h2>
-        <p className="text-gray-600 mb-8 bg-red-50 p-4 rounded-lg border-l-4 border-red-500">
-          {message}
-        </p>
-        <Link
-          to="/services"
-          className="bg-red-600 text-white px-6 py-3 rounded-lg 
-          hover:bg-red-700 transition-colors flex items-center justify-center shadow-lg hover:shadow-xl"
-        >
-          <ChevronLeft className="mr-2" /> Back to Services
-        </Link>
-      </div>
-    </div>
-  );
-
-  // Toast Notification Component
-  const ToastNotification = ({ message }) => (
-    <div
-      className={`fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300 ${
-        showToast ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
-      }`}
-    >
-      {message}
-    </div>
-  );
-
-  // Main render
-  if (loading) return <SkeletonLoader />;
-  if (error) return <ErrorDisplay message={error} />;
-  if (!service) return <ErrorDisplay message="Service not found" />;
-
-  // Extract data from service object
-  const firmName = service.firm_name;
-  const description = service.description || "No description available";
-  const price = service.off_price || service.price || "0";
-  const originalPrice = service.mrp_price || "";
-  const city = service.city || "";
-  const state = service.state || "";
-
-  // Calculate discount if applicable
-  const discountPercentage =
-    originalPrice && price
-      ? Math.round((1 - parseFloat(price) / parseFloat(originalPrice)) * 100)
-      : 0;
-
-  // Use the first image from service or fallback to placeholder
-  const displayMainImage =
-    mainImage ||
-    "https://www.susanshek.com/wp-content/uploads/2019/10/the-plaza-hotel-wedding-susan-shek-2019.jpg";
-
-  // Get specifications
-  const specifications = service.specification
-    ? service.specification.split(",").map((spec) => spec.trim())
-    : [
-        "24/7 Support",
-        "Free Consultation",
-        "Satisfaction Guarantee",
-        "Fast Response",
-      ];
+  const userData = getUserSession();
+  const userId = userData?.user_id;
 
   return (
-    <>
-      <div className="max-w-6xl mx-auto bg-white shadow-2xl rounded-2xl border border-gray-200 my-10 overflow-hidden transform transition-all">
-        {/* Header with back button and actions */}
-        <div className="p-4 md:p-6 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 flex justify-between items-center">
-          <Link
-            to="/services"
-            className="inline-flex items-center text-red-600 hover:text-red-800
-            transition-colors text-sm font-medium bg-white px-4 py-2 rounded-full shadow-sm hover:shadow group"
-          >
-            <ChevronLeft className="mr-1 group-hover:-translate-x-1 transition-transform" />
-            Back to Services
-          </Link>
-
-          <div className="flex items-center space-x-3">
-            <button
-              className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-              onClick={ShareHandle}
-              aria-label="Share"
+    <div className="bg-gray-50 min-h-screen py-10 mt-28">
+      <div className="container mx-auto px-4 max-w-6xl">
+        {services.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-md p-8 text-center">
+            <svg
+              className="w-20 h-20 mx-auto text-gray-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
             >
-              <Share2
-                size={20}
-                className="text-gray-600 hover:text-red-600 transition-colors"
-              />
-            </button>
-            <button
-              className={`p-2 rounded-full hover:bg-red-50 transition-colors ${
-                liked ? "text-red-500 bg-red-50" : "text-gray-600"
-              }`}
-              onClick={handleLikeToggle}
-              aria-label={liked ? "Remove from favorites" : "Add to favorites"}
-            >
-              <Heart
-                size={20}
-                fill={liked ? "currentColor" : "none"}
-                className={liked ? "scale-110 transition-transform" : ""}
-              />
-            </button>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+            <p className="mt-6 text-xl font-medium text-gray-700">
+              No services available for this vendor
+            </p>
+            <p className="mt-2 text-gray-500">
+              Please try selecting a different vendor or check back later.
+            </p>
           </div>
-        </div>
+        ) : (
+          services.map((service, index) => (
+            <div
+              key={index}
+              className="bg-white rounded-xl shadow-lg overflow-hidden"
+            >
+              {/* Service Header - Mobile View */}
+              <div className="lg:hidden p-4 border-b">
+                <h1 className="text-xl font-bold text-gray-800">
+                  {service.firm_name}
+                </h1>
+                <p className="text-sm text-gray-500">{service.service_cat}</p>
+              </div>
 
-        <div className="flex flex-wrap">
-          {/* Left column - Images */}
-          <div className="md:w-2/5 w-full p-4 md:p-6">
-            <div className="relative rounded-xl overflow-hidden shadow-lg group">
-              <img
-                className="w-full h-80 object-cover transition-transform duration-500 group-hover:scale-105"
-                src={displayMainImage}
-                alt="Service main"
-                onClick={() => setSelectedMedia(displayMainImage)}
-              />
-              {discountPercentage > 0 && (
-                <div className="absolute top-4 right-4 bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
-                  {discountPercentage}% OFF
+              {/* Main Content */}
+              <div className="lg:flex">
+                {/* Image Carousel */}
+                <div className="lg:w-1/2 relative bg-gray-100">
+                  {service.processedImages &&
+                  service.processedImages.length > 0 ? (
+                    <div className="relative h-80 lg:h-full">
+                      <img
+                        src={service.processedImages[currentImageIndex]}
+                        alt={`${service.firm_name} - ${currentImageIndex + 1}`}
+                        className="w-full h-full object-cover aspect-square"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src =
+                            "https://via.placeholder.com/800x400?text=Image+Not+Available";
+                        }}
+                      />
+
+                      {/* Image Navigation */}
+                      {service.processedImages.length > 1 && (
+                        <>
+                          <button
+                            onClick={prevImage}
+                            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-75 transition-all focus:outline-none focus:ring-2 focus:ring-red-500"
+                            aria-label="Previous image"
+                          >
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M15 19l-7-7 7-7"
+                              ></path>
+                            </svg>
+                          </button>
+                          <button
+                            onClick={nextImage}
+                            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-75 transition-all focus:outline-none focus:ring-2 focus:ring-red-500"
+                            aria-label="Next image"
+                          >
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M9 5l7 7-7 7"
+                              ></path>
+                            </svg>
+                          </button>
+
+                          {/* Image Indicators */}
+                          <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
+                            {service.processedImages.map((_, imgIndex) => (
+                              <button
+                                key={imgIndex}
+                                onClick={() => setCurrentImageIndex(imgIndex)}
+                                className={`h-3 w-3 rounded-full transition-all ${
+                                  currentImageIndex === imgIndex
+                                    ? "bg-white scale-110"
+                                    : "bg-white bg-opacity-50 hover:bg-opacity-75"
+                                }`}
+                                aria-label={`Go to image ${imgIndex + 1}`}
+                              />
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-80 lg:h-full bg-gray-100">
+                      <div className="text-center">
+                        <svg
+                          className="mx-auto h-16 w-16 text-gray-300"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="1"
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                        <p className="mt-2 text-gray-500 text-sm">
+                          No images available
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-              <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity"></div>
-              <div className="absolute bottom-4 right-4">
-                <button
-                  className="bg-white bg-opacity-90 hover:bg-opacity-100 p-2 rounded-full shadow-lg transform transition-transform hover:scale-110"
-                  onClick={() => {
-                    setCurrentMediaIndex(0);
-                    setShowImageCarousel(true);
-                  }}
-                >
-                  <FileImage size={20} className="text-red-600" />
-                </button>
-              </div>
-            </div>
 
-            {/* Thumbnails */}
-            {renderMediaPreviews()}
-          </div>
-
-          {/* Right column - Details */}
-          <div className="md:w-3/5 w-full p-6 md:p-8">
-            {/* Service name and rating */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-              <h1 className="text-3xl font-bold text-gray-800 mb-2 md:mb-0 leading-tight">
-                {firmName}
-              </h1>
-              <div className="flex items-center text-yellow-500 bg-yellow-50 px-3 py-1 rounded-lg">
-                <Star size={18} fill="currentColor" />
-                <Star size={18} fill="currentColor" />
-                <Star size={18} fill="currentColor" />
-                <Star size={18} fill="currentColor" />
-                <Star size={18} fill="none" stroke="currentColor" />
-                <span className="ml-2 text-gray-700 font-medium">(4.0)</span>
-              </div>
-            </div>
-
-            {/* Service description */}
-            <div className="mt-6 text-gray-600 bg-gray-50 p-4 rounded-lg border-l-4 border-red-400">
-              <p className="leading-relaxed">{description}</p>
-            </div>
-
-            {/* Price section */}
-            <div className="mt-6 flex items-baseline gap-3">
-              <div className="text-3xl font-bold text-red-600">
-                ₹ {parseFloat(price).toLocaleString()}
-              </div>
-              {originalPrice &&
-                parseFloat(originalPrice) > parseFloat(price) && (
-                  <div className="text-xl line-through text-gray-400">
-                    ₹ {parseFloat(originalPrice).toLocaleString()}
+                {/* Service Details */}
+                <div className="lg:w-1/2 p-6">
+                  {/* Service Header - Desktop View */}
+                  <div className="hidden lg:block">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h1 className="text-3xl font-bold text-gray-800">
+                          {service.firm_name}
+                        </h1>
+                        <p className="text-gray-500 mt-1">
+                          {service.service_cat}
+                        </p>
+                      </div>
+                     
+                    </div>
                   </div>
-                )}
-              {discountPercentage > 0 && (
-                <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium shadow-sm">
-                  Save {discountPercentage}%
-                </div>
-              )}
-            </div>
 
-            {/* Location and attributes */}
-            <div className="mt-6 flex flex-wrap items-center gap-3">
-              {(city || state) && (
-                <div className="flex items-center bg-blue-50 py-2 px-4 rounded-full shadow-sm">
-                  <MapPin className="text-blue-600" size={16} />
-                  <p className="text-gray-700 text-sm ml-1 font-medium">
-                    {city}
-                    {city && state && ", "}
-                    {state}
-                  </p>
-                </div>
-              )}
-
-              <div className="flex items-center bg-purple-50 py-2 px-4 rounded-full shadow-sm">
-                <Clock className="text-purple-600" size={16} />
-                <p className="text-gray-700 text-sm ml-1 font-medium">
-                  24/7 Service
-                </p>
-              </div>
-
-              {service.is_verified && (
-                <div className="flex items-center bg-green-50 py-2 px-4 rounded-full shadow-sm">
-                  <CheckCircle className="text-green-600" size={16} />
-                  <p className="text-gray-700 text-sm ml-1 font-medium">
-                    Verified Provider
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Action buttons */}
-            <div className="mt-8">
-              <div className="flex flex-col md:flex-row gap-4">
-                <button
-                  className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 
-                  text-white font-medium py-3 px-6 rounded-xl flex-1 transition-all duration-300 
-                  transform hover:scale-105 shadow-lg hover:shadow-xl flex justify-center items-center"
-                >
-                  <Calendar className="mr-2" size={18} />
-                  Book Now
-                </button>
-              </div>
-            </div>
-
-            {/* Service highlights */}
-
-            <div className="mt-8 bg-gray-50 p-5 rounded-xl border border-gray-200">
-              <h3 className="font-semibold text-gray-800 mb-4 flex items-center">
-                <Tag className="mr-2 text-red-600" size={18} />
-                Contact Details
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="flex flex-col bg-white py-3 px-4 rounded-lg shadow-sm">
-                  <div className="flex items-center mb-2">
-                    <MapPinCheckInsideIcon
-                      className="text-green-500 mr-2 flex-shrink-0"
-                      size={16}
-                    />
-                    <p className="text-gray-700 text-sm">
-                      Pincode: {service.pincode}
+                  {/* Price - Mobile View */}
+                  <div className="lg:hidden mt-2 flex justify-between items-center">
+                    <p className="text-2xl font-bold text-red-600">
+                      ₹{service.off_price}
                     </p>
+                    <div className="flex items-center">
+                      <p className="line-through text-gray-500 mr-2">
+                        ₹{service.mrp_price}
+                      </p>
+                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                        Save ₹{service.mrp_price - service.off_price}
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-gray-700 text-sm ml-6 mb-1">
-                    State: {service.state}
-                  </p>
-                  <p className="text-gray-700 text-sm ml-6 mb-1">
-                    Status: {service.status}
-                  </p>
-                  <p className="text-gray-700 text-sm ml-6 mb-1">
-                    District: {service.district}
-                  </p>
-                  <p className="text-gray-700 text-sm ml-6 mb-1">
-                    Firm Name: {service.firm_name}
-                  </p>
-                  <p className="text-gray-700 text-sm ml-6">
-                    Service Category: {service.service_cat}
-                  </p>
+
+                  {/* Tabs Navigation */}
+                  <div className="border-b border-gray-200 mt-6">
+                    <nav className="flex -mb-px overflow-x-auto">
+                      <button
+                        onClick={() => setActiveTab("description")}
+                        className={`py-3 px-4 font-medium whitespace-nowrap transition-all ${
+                          activeTab === "description"
+                            ? "border-b-2 border-red-500 text-red-600"
+                            : "border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        }`}
+                      >
+                        Description
+                      </button>
+                      <button
+                        onClick={() => setActiveTab("details")}
+                        className={`py-3 px-4 font-medium whitespace-nowrap transition-all ${
+                          activeTab === "details"
+                            ? "border-b-2 border-red-500 text-red-600"
+                            : "border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        }`}
+                      >
+                        Details
+                      </button>
+                      <button
+                        onClick={() => setActiveTab("media")}
+                        className={`py-3 px-4 font-medium whitespace-nowrap transition-all ${
+                          activeTab === "media"
+                            ? "border-b-2 border-red-500 text-red-600"
+                            : "border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        }`}
+                      >
+                        Videos
+                      </button>
+                      <button
+                        onClick={() => setActiveTab("contact")}
+                        className={`py-3 px-4 font-medium whitespace-nowrap transition-all ${
+                          activeTab === "contact"
+                            ? "border-b-2 border-red-500 text-red-600"
+                            : "border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        }`}
+                      >
+                        Contact
+                      </button>
+                    </nav>
+                  </div>
+
+                  {/* Tab Content */}
+                  <div className="py-6">
+                    {activeTab === "description" && (
+                      <div className="prose max-w-none">
+                        <p className="text-gray-700 leading-relaxed">
+                          {service.description ||
+                            "No description available for this service."}
+                        </p>
+                      </div>
+                    )}
+
+                    {activeTab === "details" && (
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="bg-gray-50 p-5 rounded-lg border border-gray-100 hover:shadow-sm transition-shadow">
+                            <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
+                              <svg
+                                className="w-5 h-5 mr-2 text-red-500"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                                />
+                              </svg>
+                              Service Specification
+                            </h3>
+                            <p className="text-gray-600">
+                              {service.specification || "Not specified"}
+                            </p>
+                          </div>
+                          <div className="bg-gray-50 p-5 rounded-lg border border-gray-100 hover:shadow-sm transition-shadow">
+                            <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
+                              <svg
+                                className="w-5 h-5 mr-2 text-red-500"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                                />
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                              </svg>
+                              Location
+                            </h3>
+                            <address className="not-italic text-gray-600">
+                              {service.house_no}, {service.near_by}, <br />
+                              {service.city}, {service.district}, <br />
+                              {service.state} - {service.pincode}
+                            </address>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeTab === "media" && (
+                      <div className="space-y-6">
+                        {service.processedVideos &&
+                        service.processedVideos.length > 0 ? (
+                          <div className="grid grid-cols-1 gap-4">
+                            {service.processedVideos.map((video, vIndex) => (
+                              <div
+                                key={vIndex}
+                                className="rounded-lg overflow-hidden shadow-md bg-black"
+                              >
+                                <video
+                                  controls
+                                  src={video}
+                                  className="w-full h-auto"
+                                  poster={
+                                    service.processedImages &&
+                                    service.processedImages.length > 0
+                                      ? service.processedImages[0]
+                                      : ""
+                                  }
+                                >
+                                  Your browser does not support the video tag.
+                                </video>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-10 px-4 bg-gray-50 rounded-lg border border-gray-100">
+                            <svg
+                              className="w-12 h-12 mx-auto text-gray-300"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="1.5"
+                                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                              />
+                            </svg>
+                            <p className="mt-2 text-gray-500">
+                              No videos available for this service
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {activeTab === "contact" && (
+                      <div className="space-y-4">
+                        <div className="bg-gradient-to-r from-red-50 to-white p-6 rounded-lg border border-red-100">
+                          <h3 className="font-semibold text-red-700 mb-4 flex items-center">
+                            <svg
+                              className="w-5 h-5 mr-2"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                              />
+                            </svg>
+                            Contact Information
+                          </h3>
+                          <div className="space-y-3">
+                            <p className="flex items-center text-gray-700">
+                              <svg
+                                className="w-5 h-5 mr-3 text-red-500"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                                />
+                              </svg>
+                              <span className="font-medium">
+                                {service.phone || "Phone not available"}
+                              </span>
+                            </p>
+                            <p className="flex items-center text-gray-700">
+                              <svg
+                                className="w-5 h-5 mr-3 text-red-500"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                                />
+                              </svg>
+                              <span className="font-medium">
+                                {service.email || "Email not available"}
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Price Specifications */}
                 </div>
               </div>
             </div>
-
-            <div className="mt-8 bg-gray-50 p-5 rounded-xl border border-gray-200">
-              <h3 className="font-semibold text-gray-800 mb-4 flex items-center">
-                <Tag className="mr-2 text-red-600" size={18} />
-                Service Include
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {specifications.map((spec, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center bg-white py-2 px-3 rounded-lg shadow-sm"
+          ))
+        )}
+        <div className="mt-4 space-y-4">
+          {priceSpecification.map((specifications, index) => (
+            <div
+              key={index}
+              className="p-4 rounded-lg border border-gray-100 hover:shadow-md transition-all"
+            >
+              <div className="grid grid-cols-1 gap-4">
+                {/* Specification title */}
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                  <svg
+                    className="w-5 h-5 mr-2 text-red-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
                   >
-                    <CheckCircle
-                      className="text-green-500 mr-2 flex-shrink-0"
-                      size={16}
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
                     />
-                    <p className="text-gray-700 text-sm">{spec}</p>
+                  </svg>
+                  {specifications.specification}
+                </h3>
+
+                {/* Price information */}
+                <div className="flex justify-between items-center">
+                  <div className="flex flex-col">
+                    <span className="text-gray-500 line-through text-sm">
+                      ₹{specifications.mrp_price}
+                    </span>
+                    <span className="text-xl font-bold text-red-600">
+                      ₹{specifications.off_price}
+                    </span>
                   </div>
-                ))}
+
+                  {specifications.mrp_price > specifications.off_price && (
+                    <div className="flex">
+                      <span className="bg-red-100 text-red-800 text-xs px-3 py-1 rounded-full font-medium">
+                        {Math.round(
+                          ((specifications.mrp_price -
+                            specifications.off_price) /
+                            specifications.mrp_price) *
+                            100
+                        )}
+                        % OFF
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Booking button */}
+                <button
+                  onClick={(e) => handleSubmit(e, specifications)}
+                  disabled={!userId || isSubmitting}
+                  className={`w-full py-3 px-4 rounded-lg flex items-center justify-center transition-all ${
+                    !userId
+                      ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                      : isSubmitting
+                      ? "bg-red-400 cursor-wait"
+                      : "bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg"
+                  }`}
+                >
+                  <span className="font-medium">
+                    {!userId 
+                      ? "Login to Book" 
+                      : isSubmitting 
+                      ? "Processing..." 
+                      : "Book Now"
+                    }
+                  </span>
+                  {!isSubmitting && (
+                    <svg
+                      className="ml-2 h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M14 5l7 7m0 0l-7 7m7-7H3"
+                      />
+                    </svg>
+                  )}
+                </button>
+                {bookingError && (
+                  <p className="mt-2 text-sm text-red-600">
+                    {bookingError}
+                  </p>
+                )}
               </div>
             </div>
-          </div>
+          ))}
         </div>
       </div>
-
-      {/* Media Modal */}
-      {showImageCarousel && (
-        <MediaCarousel
-          items={getImages()}
-          type="image"
-          onClose={() => setShowImageCarousel(false)}
-          currentIndex={currentMediaIndex}
-          setCurrentIndex={setCurrentMediaIndex}
-        />
-      )}
-
-      {showVideoCarousel && (
-        <MediaCarousel
-          items={getVideos()}
-          type="video"
-          onClose={() => setShowVideoCarousel(false)}
-          currentIndex={currentMediaIndex}
-          setCurrentIndex={setCurrentMediaIndex}
-        />
-      )}
-
-      {/* Toast notification */}
-      <ToastNotification message={toastMessage} />
-    </>
+    </div>
   );
 }
 

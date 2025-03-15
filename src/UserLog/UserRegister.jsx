@@ -52,7 +52,7 @@ const PasswordInput = ({ register, errors }) => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 ">
       <div className="relative">
         <input
           type={showPassword ? "text" : "password"}
@@ -160,14 +160,18 @@ const UserRegister = () => {
 
       if (result.status === 1) {
         setSuccess("Registration successful! Redirecting to login...");
-        reset();
         // Store user data in session storage
         sessionStorage.setItem("user_email", data.user_email);
         sessionStorage.setItem("user_password", data.user_password);
-        sessionStorage.setItem("user_data", JSON.stringify(result.data[0]));
-        setTimeout(() => {
-          navigate("/UserLogin");
-        }, 2000);
+        
+        if (result.data && result.data.length > 0) {
+          sessionStorage.setItem("user_data", JSON.stringify(result.data[0]));
+        }
+        
+        reset();
+        
+        // Immediate navigation to login page
+        navigate("/UserLogin");
       } else {
         setError(result.message || "Registration failed. Please try again.");
       }
@@ -181,11 +185,11 @@ const UserRegister = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-200 py-8 px-4">
+    <div className="min-h-screen bg-slate-200 py-8 px-4 mt-24">
       <div className="max-w-[490px] mx-auto bg-white rounded-lg shadow-md">
         <div className="p-6">
           <p className="text-center py-3 text-xl font-semibold">
-            Create Your Account (As A user)
+            Create Your Account on OTM
           </p>
 
           {error && (

@@ -134,7 +134,7 @@ const UserProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 mt-20">
       {notification.show && (
         <div
           className={`fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg ${

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link, Links } from "react-router-dom";
-import VendorRegistration from "./VendorRegistration";
 
 const UserLogin = () => {
   const [formData, setFormData] = useState({
@@ -15,7 +14,7 @@ const UserLogin = () => {
   // Check if user is already logged in
   useEffect(() => {
     if (sessionStorage.getItem("userData")) {
-      navigate("/Vendors");
+      navigate("/");
     }
   }, [navigate]);
 
@@ -66,7 +65,7 @@ const UserLogin = () => {
         // Dispatch event to notify other components
         window.dispatchEvent(new Event("userAuthChanged"));
 
-        navigate("/Vendors");
+        navigate("/");
       } else {
         setErrorMessage(
           result.message || "Invalid credentials. Please try again."
